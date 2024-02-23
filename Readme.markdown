@@ -22,7 +22,7 @@ for (Chunk chunk : png.beforeIdats)
 var img = (GrayImage)ImageDecoder.decode(png);
 for (int y = 0; y < img.getHeight(); y++) {
     for (int x = 0; x < img.getWidth(); x++) {
-        draw(img.getPixel(x, y));
+      draw(img.getPixel(x, y));
     }
 }
 ```
@@ -32,7 +32,7 @@ What makes this library modern? It:
 * was started in the year 2022 with all the benefits of hindsight;
 * presents an easy-to-use, type-safe, misuse-resistant API;
 * emphasizes implementation correctness and security over sprawling features and fast code;
-* uses recent Java-language features to make the code more concise and readable;
+* ~~uses recent Java-language features to make the code more concise and readable;~~
 * consumes more CPU and memory to simplify the logic and improve reliability.
 
 

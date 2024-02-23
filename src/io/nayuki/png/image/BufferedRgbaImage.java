@@ -24,8 +24,6 @@ public final class BufferedRgbaImage implements RgbaImage, Cloneable {
 	private final long illegalOnes;
 	private long[] pixels;
 	
-	
-	
 	/*---- Constructors ----*/
 	
 	/**
@@ -138,7 +136,7 @@ public final class BufferedRgbaImage implements RgbaImage, Cloneable {
 	
 	@Override public BufferedRgbaImage clone() {
 		try {
-			var result = (BufferedRgbaImage)super.clone();
+			BufferedRgbaImage result = (BufferedRgbaImage)super.clone();
 			result.bitDepths = result.bitDepths.clone();
 			result.pixels = result.pixels.clone();
 			return result;

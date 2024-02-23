@@ -21,22 +21,22 @@ import java.util.Objects;
  * of the last image modification. Instances are immutable.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11tIME
  */
-public record Time(
-		int year,
-		int month,
-		int day,
-		int hour,
-		int minute,
-		int second)
-	implements SmallDataChunk {
-	
-	
+public class Time implements SmallDataChunk {
+
 	static final String TYPE = "tIME";
-	
-	
+	private final int year, month, day, hour, minute, second;
+
+
 	/*---- Constructors and factory ----*/
 	
-	public Time {
+	public Time(
+			int year,
+			int month,
+			int day,
+			int hour,
+			int minute,
+			int second)
+	{
 		if (!(0 <= year   && year   <= Short.MAX_VALUE)) throw new IllegalArgumentException("Year out of range"  );
 		if (!(1 <= month  && month  <= 12             )) throw new IllegalArgumentException("Month out of range" );
 		int maxDay = YearMonth.of(year, month).lengthOfMonth();
@@ -44,6 +44,13 @@ public record Time(
 		if (!(0 <= hour   && hour   <= 23             )) throw new IllegalArgumentException("Hour out of range"  );
 		if (!(0 <= minute && minute <= 59             )) throw new IllegalArgumentException("Minute out of range");
 		if (!(0 <= second && second <= 60             )) throw new IllegalArgumentException("Second out of range");
+
+		this.year = year;
+		this.month = month;
+		this.day = day;
+		this.hour = hour;
+		this.minute = minute;
+		this.second = second;
 	}
 	
 	

@@ -17,15 +17,17 @@ import java.util.Objects;
  * contains a stereo pair of subimages. Instances are immutable.
  * @see https://ftp-osl.osuosl.org/pub/libpng/documents/pngext-1.5.0.html#C.sTER
  */
-public record Ster(Mode mode) implements SmallDataChunk {
+public class Ster implements SmallDataChunk {
 	
 	static final String TYPE = "sTER";
-	
-	
+	private final Mode mode;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Ster {
+	public Ster(Mode mode) {
 		Objects.requireNonNull(mode);
+		this.mode = mode;
 	}
 	
 	

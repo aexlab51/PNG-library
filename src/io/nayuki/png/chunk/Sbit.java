@@ -18,14 +18,15 @@ import java.util.Objects;
  * The interpretation of this chunk depends on the color type in the IHDR chunk.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11sBIT
  */
-public record Sbit(byte[] data) implements BytesDataChunk {
+public class Sbit implements BytesDataChunk {
 	
 	static final String TYPE = "sBIT";
-	
-	
+	private final byte[] data;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Sbit {
+	public Sbit(byte[] data) {
 		Objects.requireNonNull(data);
 		if (!(1 <= data.length && data.length <= 4))
 			throw new IllegalArgumentException("Array length out of range");
@@ -33,6 +34,8 @@ public record Sbit(byte[] data) implements BytesDataChunk {
 			if (!(1 <= bits && bits <= 16))
 				throw new IllegalArgumentException("Number of significant bits out of range");
 		}
+
+		this.data = data;
 	}
 	
 	
@@ -47,5 +50,9 @@ public record Sbit(byte[] data) implements BytesDataChunk {
 	@Override public String getType() {
 		return TYPE;
 	}
-	
+
+	@Override
+	public byte[] data() {
+		return data;
+	}
 }

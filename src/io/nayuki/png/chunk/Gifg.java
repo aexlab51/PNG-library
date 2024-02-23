@@ -17,23 +17,26 @@ import java.util.Objects;
  * backward compatibility for GIF images. Instances are immutable.
  * @see https://ftp-osl.osuosl.org/pub/libpng/documents/pngext-1.5.0.html#C.gIFg
  */
-public record Gifg(
-		int disposalMethod,
-		boolean userInputFlag,
-		int delayTime)
-	implements SmallDataChunk {
+public class Gifg implements SmallDataChunk {
 	
 	
 	static final String TYPE = "gIFg";
-	
-	
+
+	private final int disposalMethod;
+	private final boolean userInputFlag;
+	private final int delayTime;
+
+
 	/*---- Constructor and factory ----*/
-	
-	public Gifg {
+	public Gifg(int disposalMethod, boolean userInputFlag, int delayTime) {
 		if (disposalMethod >>> 3 != 0)
 			throw new IllegalArgumentException("Disposal method out of range");
 		if (delayTime >>> 16 != 0)
 			throw new IllegalArgumentException("Delay time out of range");
+
+		this.disposalMethod = disposalMethod;
+		this.userInputFlag = userInputFlag;
+		this.delayTime = delayTime;
 	}
 	
 	

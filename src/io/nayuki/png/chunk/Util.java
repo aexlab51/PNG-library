@@ -48,12 +48,12 @@ final class Util {
 		long result = 0;
 		for (Object obj : componentLengths) {
 			int n;
-			if (obj instanceof Integer i)
-				n = i.intValue();
-			else if (obj instanceof byte[] b)
-				n = b.length;
-			else if (obj instanceof String s)
-				n = s.length();
+			if (obj instanceof Integer)
+				n = ((Integer) obj).intValue();
+			else if (obj instanceof byte[])
+				n = ((byte[])obj).length;
+			else if (obj instanceof String)
+				n = ((String) obj).length();
 			else
 				throw new IllegalArgumentException("Value has unrecognized type");
 			

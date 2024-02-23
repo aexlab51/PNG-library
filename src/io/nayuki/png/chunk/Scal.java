@@ -20,23 +20,28 @@ import java.util.Objects;
  * subject such as in maps and astronomical surveys. Instances are immutable.
  * @see https://ftp-osl.osuosl.org/pub/libpng/documents/pngext-1.5.0.html#C.sCAL
  */
-public record Scal(
-		UnitSpecifier unitSpecifier,
-		String pixelWidth,
-		String pixelHeight)
-	implements Chunk {
-	
+public class Scal implements Chunk {
 	
 	static final String TYPE = "sCAL";
-	
-	
+	private final UnitSpecifier unitSpecifier;
+	private final String pixelWidth;
+	private final String pixelHeight;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Scal {
+	public Scal(
+			UnitSpecifier unitSpecifier,
+			String pixelWidth,
+			String pixelHeight) {
 		Objects.requireNonNull(unitSpecifier);
 		if (Util.testAsciiFloat(pixelWidth) != 1 || Util.testAsciiFloat(pixelHeight) != 1)
 			throw new IllegalArgumentException("Invalid number string");
 		Util.checkedLengthSum(Byte.BYTES, pixelWidth, Byte.BYTES, pixelHeight);
+
+		this.unitSpecifier = unitSpecifier;
+		this.pixelWidth = pixelWidth;
+		this.pixelHeight = pixelHeight;
 	}
 	
 	
@@ -61,7 +66,7 @@ public record Scal(
 	
 	@Override public void writeChunk(OutputStream out) throws IOException {
 		int dataLen = Util.checkedLengthSum(Byte.BYTES, pixelWidth, Byte.BYTES, pixelHeight);
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeUint8(unitSpecifier.ordinal() + 1);
 			cout.writeString(pixelWidth, StandardCharsets.US_ASCII, true);
 			cout.writeString(pixelHeight, StandardCharsets.US_ASCII, false);

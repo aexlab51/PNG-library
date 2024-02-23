@@ -18,25 +18,41 @@ import java.util.Objects;
  * used in the image and the reference white point. Instances are immutable.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11cHRM
  */
-public record Chrm(
-		int whitePointX, int whitePointY,
-		int redX       , int redY       ,
-		int greenX     , int greenY     ,
-		int blueX      , int blueY      )
-	implements SmallDataChunk {
+public class Chrm implements SmallDataChunk {
 	
 	
 	static final String TYPE = "cHRM";
-	
-	
+	private final int whitePointX;
+	private final int whitePointY;
+	private final int redX;
+	private final int redY;
+	private final int greenX;
+	private final int greenY;
+	private final int blueX;
+	private final int blueY;
+
+
 	/*---- Constructors and factory ----*/
 	
-	public Chrm {
+	public Chrm(
+			int whitePointX, int whitePointY,
+			int redX       , int redY       ,
+			int greenX     , int greenY     ,
+			int blueX      , int blueY      ) {
 		if (whitePointX < 0 || whitePointY < 0 ||
 		    redX        < 0 || redY        < 0 ||
 		    greenX      < 0 || greenY      < 0 ||
 		    blueX       < 0 || blueY       < 0)
 			throw new IllegalArgumentException("Invalid int32 value");
+
+		this.whitePointX = whitePointX;
+		this.whitePointY = whitePointY;
+		this.redX = redX;
+		this.redY = redY;
+		this.greenX = greenX;
+		this.greenY = greenY;
+		this.blueX = blueX;
+		this.blueY = blueY;
 	}
 	
 	

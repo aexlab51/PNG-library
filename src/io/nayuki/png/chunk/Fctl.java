@@ -17,25 +17,33 @@ import java.util.Objects;
  * update rectangle, delay, and miscellaneous parameters. Instances are immutable.
  * @see https://wiki.mozilla.org/APNG_Specification#.60fcTL.60:_The_Frame_Control_Chunk
  */
-public record Fctl(
-		int sequence,
-		int width,
-		int height,
-		int xOffset,
-		int yOffset,
-		int delayNumerator,
-		int delayDenominator,
-		DisposeOperation disposeOp,
-		BlendOperation blendOp)
-	implements SmallDataChunk {
-	
-	
+public class Fctl implements SmallDataChunk {
+
 	static final String TYPE = "fcTL";
-	
-	
+	private final int sequence;
+	private final int width;
+	private final int height;
+	private final int xOffset;
+	private final int yOffset;
+	private final int delayNumerator;
+	private final int delayDenominator;
+	private final DisposeOperation disposeOp;
+	private final BlendOperation blendOp;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Fctl {
+	public Fctl(
+			int sequence,
+			int width,
+			int height,
+			int xOffset,
+			int yOffset,
+			int delayNumerator,
+			int delayDenominator,
+			DisposeOperation disposeOp,
+			BlendOperation blendOp) {
+
 		if (sequence < 0)
 			throw new IllegalArgumentException("Invalid sequence number");
 		if (width <= 0)
@@ -52,6 +60,16 @@ public record Fctl(
 			throw new IllegalArgumentException("Invalid delay denominator");
 		Objects.requireNonNull(disposeOp);
 		Objects.requireNonNull(blendOp);
+
+		this.sequence = sequence;
+		this.width = width;
+		this.height = height;
+		this.xOffset = xOffset;
+		this.yOffset = yOffset;
+		this.delayNumerator = delayNumerator;
+		this.delayDenominator = delayDenominator;
+		this.disposeOp = disposeOp;
+		this.blendOp = blendOp;
 	}
 	
 	

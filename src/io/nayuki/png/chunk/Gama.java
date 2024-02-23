@@ -17,16 +17,18 @@ import java.util.Objects;
  * samples and the desired display output intensity. Instances are immutable.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11gAMA
  */
-public record Gama(int gamma) implements SmallDataChunk {
+public class Gama implements SmallDataChunk {
 	
 	static final String TYPE = "gAMA";
-	
-	
+	private final int gamma;
+
+
 	/*---- Constructors and factory ----*/
 	
-	public Gama {
+	public Gama(int gamma) {
 		if (gamma <= 0)
 			throw new IllegalArgumentException("Gamma value out of range");
+		this.gamma = gamma;
 	}
 	
 	

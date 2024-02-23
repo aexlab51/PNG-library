@@ -22,21 +22,26 @@ import java.util.Optional;
  * should be treated as immutable, but arrays are not copied defensively.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11iTXt
  */
-public record Itxt(
-		String keyword,
-		String languageTag,
-		String translatedKeyword,
-		Optional<CompressionMethod> compressionMethod,
-		byte[] text)
+public class Itxt
 	implements Chunk {
 	
 	
 	static final String TYPE = "iTXt";
-	
-	
+	private final String keyword;
+	private final String languageTag;
+	private final String translatedKeyword;
+	private final Optional<CompressionMethod> compressionMethod;
+	private final byte[] text;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Itxt {
+	public Itxt(
+			String keyword,
+			String languageTag,
+			String translatedKeyword,
+			Optional<CompressionMethod> compressionMethod,
+			byte[] text) {
 		Util.checkKeyword(keyword, true);
 		
 		checkLanguageTag(languageTag);
@@ -50,7 +55,7 @@ public record Itxt(
 		Objects.requireNonNull(compressionMethod);
 		Objects.requireNonNull(text);
 		byte[] decompText = compressionMethod.map(cm -> cm.decompress(text)).orElse(text);
-		var textStr = new String(decompText, StandardCharsets.UTF_8);
+		String textStr = new String(decompText, StandardCharsets.UTF_8);
 		for (int i = 0; i < textStr.length(); i++) {
 			if (textStr.charAt(i) == '\0')
 				throw new IllegalArgumentException("NUL character in text");
@@ -58,6 +63,12 @@ public record Itxt(
 		
 		Util.checkedLengthSum(keyword, 3 * Byte.BYTES, languageTag, Byte.BYTES,
 			text, Byte.BYTES, translatedKeyword.getBytes(StandardCharsets.UTF_8));
+
+		this.keyword = keyword;
+		this.languageTag = languageTag;
+		this.translatedKeyword = translatedKeyword;
+		this.compressionMethod = compressionMethod;
+		this.text = text;
 	}
 	
 	
@@ -110,7 +121,7 @@ public record Itxt(
 	@Override public void writeChunk(OutputStream out) throws IOException {
 		int dataLen = Util.checkedLengthSum(keyword, 3 * Byte.BYTES, languageTag, Byte.BYTES,
 			text, Byte.BYTES, translatedKeyword.getBytes(StandardCharsets.UTF_8));
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeString(keyword, StandardCharsets.ISO_8859_1, true);
 			cout.writeUint8(compressionMethod.isPresent() ? 1 : 0);
 			cout.writeUint8(compressionMethod.map(cm -> cm.ordinal()).orElse(0));

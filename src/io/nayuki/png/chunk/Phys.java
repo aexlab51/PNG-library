@@ -17,22 +17,27 @@ import java.util.Objects;
  * size or aspect ratio for displaying the image. Instances are immutable.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11pHYs
  */
-public record Phys(
-		int pixelsPerUnitX,
-		int pixelsPerUnitY,
-		UnitSpecifier unitSpecifier)
-	implements SmallDataChunk {
-	
+public class Phys implements SmallDataChunk {
 	
 	static final String TYPE = "pHYs";
-	
-	
+	private final int pixelsPerUnitX;
+	private final int pixelsPerUnitY;
+	private final UnitSpecifier unitSpecifier;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Phys {
+	public Phys(
+			int pixelsPerUnitX,
+			int pixelsPerUnitY,
+			UnitSpecifier unitSpecifier) {
 		if (pixelsPerUnitX <= 0 || pixelsPerUnitY <= 0)
 			throw new IllegalArgumentException("Non-positive physical density");
 		Objects.requireNonNull(unitSpecifier);
+
+		this.pixelsPerUnitX = pixelsPerUnitX;
+		this.pixelsPerUnitY = pixelsPerUnitY;
+		this.unitSpecifier = unitSpecifier;
 	}
 	
 	

@@ -21,7 +21,7 @@ import java.util.Arrays;
 interface SmallDataChunk extends Chunk {
 	
 	@Override public default void writeChunk(OutputStream out) throws IOException {
-		var bout = new ByteArrayOutputStream();
+		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		try {
 			writeData(new ChunkWriter(Integer.MAX_VALUE, "AAAA", bout));
 		} catch (IOException e) {
@@ -29,7 +29,7 @@ interface SmallDataChunk extends Chunk {
 		}
 		byte[] temp = bout.toByteArray();
 		byte[] data = Arrays.copyOfRange(temp, 8, temp.length);
-		try (var cout = new ChunkWriter(data.length, getType(), out)) {
+		try (ChunkWriter cout = new ChunkWriter(data.length, getType(), out)) {
 			cout.write(data);
 		}
 	}

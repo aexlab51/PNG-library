@@ -18,14 +18,15 @@ import java.util.Objects;
  * be treated as immutable, but arrays are not copied defensively.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11hIST
  */
-public record Hist(int[] frequencies) implements SmallDataChunk {
+public class Hist implements SmallDataChunk {
 	
 	static final String TYPE = "hIST";
-	
-	
+	private final int[] frequencies;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Hist {
+	public Hist(int[] frequencies) {
 		Objects.requireNonNull(frequencies);
 		if (!(1 <= frequencies.length && frequencies.length <= 256))
 			throw new IllegalArgumentException("Data length out of range");
@@ -33,13 +34,15 @@ public record Hist(int[] frequencies) implements SmallDataChunk {
 			if (val >>> 16 != 0)
 				throw new IllegalArgumentException("Value out of range");
 		}
+
+		this.frequencies = frequencies;
 	}
 	
 	
 	static Hist read(ChunkReader in) throws IOException {
 		Objects.requireNonNull(in);
 		
-		var freqs = new int[in.getRemainingCount() / Short.BYTES];
+		int[] freqs = new int[in.getRemainingCount() / Short.BYTES];
 		for (int i = 0; i < freqs.length; i++)
 			freqs[i] = in.readUint16();
 		return new Hist(freqs);

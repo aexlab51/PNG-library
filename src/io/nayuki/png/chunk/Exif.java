@@ -18,15 +18,17 @@ import java.util.Objects;
  * be treated as immutable, but arrays are not copied defensively.
  * @see https://ftp-osl.osuosl.org/pub/libpng/documents/pngext-1.5.0.html#C.eXIf
  */
-public record Exif(byte[] data) implements BytesDataChunk {
+public class Exif implements BytesDataChunk {
 	
 	static final String TYPE = "eXIf";
-	
-	
+	private final byte[] data;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Exif {
+	public Exif(byte[] data) {
 		Objects.requireNonNull(data);
+		this.data = data;
 	}
 	
 	
@@ -41,5 +43,9 @@ public record Exif(byte[] data) implements BytesDataChunk {
 	@Override public String getType() {
 		return TYPE;
 	}
-	
+
+	@Override
+	public byte[] data() {
+		return data;
+	}
 }

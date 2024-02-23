@@ -45,43 +45,47 @@ public interface Chunk {
 	 */
 	public static Optional<Chunk> read(InputStream in) throws IOException {
 		Optional<ChunkReader> temp = ChunkReader.tryNew(in);
-		if (temp.isEmpty())
+		//if (temp.isEmpty())
+		if (!temp.isPresent())
 			return Optional.empty();
 		
 		try (ChunkReader cin = temp.get()) {
-			return Optional.of(switch (cin.getType()) {
-				case Actl.TYPE -> Actl.read(cin);
-				case Bkgd.TYPE -> Bkgd.read(cin);
-				case Chrm.TYPE -> Chrm.read(cin);
-				case Dsig.TYPE -> Dsig.read(cin);
-				case Exif.TYPE -> Exif.read(cin);
-				case Fctl.TYPE -> Fctl.read(cin);
-				case Fdat.TYPE -> Fdat.read(cin);
-				case Gama.TYPE -> Gama.read(cin);
-				case Gifg.TYPE -> Gifg.read(cin);
-				case Gift.TYPE -> Gift.read(cin);
-				case Gifx.TYPE -> Gifx.read(cin);
-				case Hist.TYPE -> Hist.read(cin);
-				case Iccp.TYPE -> Iccp.read(cin);
-				case Idat.TYPE -> Idat.read(cin);
-				case Iend.TYPE -> Iend.SINGLETON;
-				case Ihdr.TYPE -> Ihdr.read(cin);
-				case Itxt.TYPE -> Itxt.read(cin);
-				case Offs.TYPE -> Offs.read(cin);
-				case Pcal.TYPE -> Pcal.read(cin);
-				case Phys.TYPE -> Phys.read(cin);
-				case Plte.TYPE -> Plte.read(cin);
-				case Sbit.TYPE -> Sbit.read(cin);
-				case Scal.TYPE -> Scal.read(cin);
-				case Splt.TYPE -> Splt.read(cin);
-				case Srgb.TYPE -> Srgb.read(cin);
-				case Ster.TYPE -> Ster.read(cin);
-				case Text.TYPE -> Text.read(cin);
-				case Time.TYPE -> Time.read(cin);
-				case Trns.TYPE -> Trns.read(cin);
-				case Ztxt.TYPE -> Ztxt.read(cin);
-				default -> Custom.read(cin);
-			});
+			Chunk chunk;
+			switch (cin.getType()){
+				case Actl.TYPE: chunk=Actl.read(cin); break;
+				case Bkgd.TYPE: chunk=Bkgd.read(cin); break;
+				case Chrm.TYPE: chunk=Chrm.read(cin); break;
+				case Dsig.TYPE: chunk=Dsig.read(cin); break;
+				case Exif.TYPE: chunk=Exif.read(cin); break;
+				case Fctl.TYPE: chunk=Fctl.read(cin); break;
+				case Fdat.TYPE: chunk=Fdat.read(cin); break;
+				case Gama.TYPE: chunk=Gama.read(cin); break;
+				case Gifg.TYPE: chunk=Gifg.read(cin); break;
+				case Gift.TYPE: chunk=Gift.read(cin); break;
+				case Gifx.TYPE: chunk=Gifx.read(cin); break;
+				case Hist.TYPE: chunk=Hist.read(cin); break;
+				case Iccp.TYPE: chunk=Iccp.read(cin); break;
+				case Idat.TYPE: chunk=Idat.read(cin); break;
+				case Iend.TYPE: chunk=Iend.SINGLETON; break;
+				case Ihdr.TYPE: chunk=Ihdr.read(cin); break;
+				case Itxt.TYPE: chunk=Itxt.read(cin); break;
+				case Offs.TYPE: chunk=Offs.read(cin); break;
+				case Pcal.TYPE: chunk=Pcal.read(cin); break;
+				case Phys.TYPE: chunk=Phys.read(cin); break;
+				case Plte.TYPE: chunk=Plte.read(cin); break;
+				case Sbit.TYPE: chunk=Sbit.read(cin); break;
+				case Scal.TYPE: chunk=Scal.read(cin); break;
+				case Splt.TYPE: chunk=Splt.read(cin); break;
+				case Srgb.TYPE: chunk=Srgb.read(cin); break;
+				case Ster.TYPE: chunk=Ster.read(cin); break;
+				case Text.TYPE: chunk=Text.read(cin); break;
+				case Time.TYPE: chunk=Time.read(cin); break;
+				case Trns.TYPE: chunk=Trns.read(cin); break;
+				case Ztxt.TYPE: chunk=Ztxt.read(cin); break;
+				default: chunk=Custom.read(cin);
+			}
+
+			return Optional.of(chunk);
 		}
 	}
 	
@@ -178,8 +182,8 @@ public interface Chunk {
 		/** The DEFLATE compressed format (specified in RFC 1951) wrapped in a ZLIB container (RFC 1950). */
 		ZLIB_DEFLATE {
 			public byte[] compress(byte[] data) {
-				var bout = new ByteArrayOutputStream();
-				try (var dout = new DeflaterOutputStream(bout)) {
+				ByteArrayOutputStream bout = new ByteArrayOutputStream();
+				try (DeflaterOutputStream dout = new DeflaterOutputStream(bout)) {
 					dout.write(data);
 				} catch (IOException e) {
 					throw new AssertionError("Unreachable exception", e);
@@ -188,8 +192,8 @@ public interface Chunk {
 			}
 			
 			public byte[] decompress(byte[] data) {
-				var bout = new ByteArrayOutputStream(data.length);
-				try (var iout = new InflaterOutputStream(bout)) {
+				ByteArrayOutputStream bout = new ByteArrayOutputStream(data.length);
+				try (InflaterOutputStream iout = new InflaterOutputStream(bout)) {
 					iout.write(data);
 				} catch (IOException e) {
 					throw new IllegalArgumentException("Invalid compressed data", e);

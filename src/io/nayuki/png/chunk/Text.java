@@ -19,17 +19,22 @@ import java.util.Objects;
  * string in the ISO 8859-1 character set. Instances are immutable.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11tEXt
  */
-public record Text(String keyword, String text) implements Chunk {
+public class Text implements Chunk {
 	
 	static final String TYPE = "tEXt";
-	
-	
+	private final String keyword;
+	private final String text;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Text {
+	public Text(String keyword, String text) {
 		Util.checkKeyword(keyword, true);
 		Util.checkIso8859_1(text, true);
 		Util.checkedLengthSum(keyword, Byte.BYTES, text);
+
+		this.keyword = keyword;
+		this.text = text;
 	}
 	
 	
@@ -50,7 +55,7 @@ public record Text(String keyword, String text) implements Chunk {
 	
 	@Override public void writeChunk(OutputStream out) throws IOException {
 		int dataLen = Util.checkedLengthSum(keyword, Byte.BYTES, text);
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeString(keyword, StandardCharsets.ISO_8859_1, true);
 			cout.writeString(text, StandardCharsets.ISO_8859_1, false);
 		}

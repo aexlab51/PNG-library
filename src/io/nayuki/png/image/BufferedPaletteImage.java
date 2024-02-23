@@ -180,7 +180,7 @@ public final class BufferedPaletteImage implements PaletteImage, Cloneable {
 	
 	@Override public BufferedPaletteImage clone() {
 		try {
-			var result = (BufferedPaletteImage)super.clone();
+			BufferedPaletteImage result = (BufferedPaletteImage)super.clone();
 			result.palette = result.palette.clone();
 			result.pixels = result.pixels.clone();
 			return result;

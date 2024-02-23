@@ -35,16 +35,22 @@ import io.nayuki.png.chunk.Ihdr;
  * field values) or constraints between chunks (e.g. chunks after IEND). Instances
  * should be treated as immutable, but lists and chunks are not copied defensively.
  */
-public record XngFile(Type type, List<Chunk> chunks) {
-	
+public class XngFile {
+
+	public final List<Chunk> chunks;
+	public final Type type;
+
 	/**
 	 * Constructs a new XNG file with the specified type and list of chunks.
 	 * @param type the file type (PNG/MNG/JNG) (not {@code null})
 	 * @param chunks the list of chunks (not {@code null})
 	 */
-	public XngFile {
+	public XngFile(Type type, List<Chunk> chunks) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(chunks);
+
+		this.type = type;
+		this.chunks = chunks;
 	}
 	
 	
@@ -64,7 +70,7 @@ public record XngFile(Type type, List<Chunk> chunks) {
 	 */
 	public static XngFile read(File inFile, boolean parse) throws IOException {
 		Objects.requireNonNull(inFile);
-		try (var in = new BufferedInputStream(new FileInputStream(inFile))) {
+		try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(inFile))) {
 			return read(in, parse);
 		}
 	}
@@ -88,7 +94,7 @@ public record XngFile(Type type, List<Chunk> chunks) {
 	public static XngFile read(InputStream in, boolean parse) throws IOException {
 		Objects.requireNonNull(in);
 		
-		var sig = new byte[8];
+		byte[] sig = new byte[8];
 		new DataInputStream(in).readFully(sig);
 		Type fileType = null;
 		for (Type t : Type.values()) {
@@ -101,7 +107,8 @@ public record XngFile(Type type, List<Chunk> chunks) {
 		List<Chunk> chunks = new ArrayList<>();
 		while (true) {
 			Optional<? extends Chunk> chk = parse ? Chunk.read(in) : Custom.read(in);
-			if (chk.isEmpty())
+			//if (chk.isEmpty())
+			if (!chk.isPresent())
 				break;
 			chunks.add(chk.get());
 		}
@@ -152,7 +159,7 @@ public record XngFile(Type type, List<Chunk> chunks) {
 	 */
 	public void write(File outFile) throws IOException {
 		Objects.requireNonNull(outFile);
-		try (var out = new BufferedOutputStream(new FileOutputStream(outFile))) {
+		try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile))) {
 			write(out);
 		}
 	}

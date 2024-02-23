@@ -21,13 +21,19 @@ import java.util.Optional;
  * should be treated as immutable, but arrays are not copied defensively.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#5Chunk-layout
  */
-public record Custom(String type, byte[] data) implements BytesDataChunk {
-	
+public class Custom implements BytesDataChunk {
+
+	private final String type;
+	private final byte[] data;
+
 	/*---- Constructor and factories ----*/
 	
-	public Custom {
+	public Custom(String type, byte[] data) {
 		Chunk.checkType(type);
 		Objects.requireNonNull(data);
+
+		this.type = type;
+		this.data = data;
 	}
 	
 	
@@ -43,7 +49,8 @@ public record Custom(String type, byte[] data) implements BytesDataChunk {
 	 */
 	public static Optional<Custom> read(InputStream in) throws IOException {
 		Optional<ChunkReader> temp = ChunkReader.tryNew(in);
-		if (temp.isEmpty())
+		//if (temp.isEmpty())
+		if (!temp.isPresent())
 			return Optional.empty();
 		try (ChunkReader cin = temp.get()) {
 			return Optional.of(read(cin));
@@ -58,9 +65,13 @@ public record Custom(String type, byte[] data) implements BytesDataChunk {
 	
 	
 	/*---- Method ----*/
-	
-	@Override public String getType() {
+	@Override
+	public String getType() {
 		return type;
 	}
-	
+
+	@Override
+	public byte[] data() {
+		return data;
+	}
 }

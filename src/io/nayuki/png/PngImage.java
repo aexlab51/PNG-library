@@ -58,7 +58,7 @@ public final class PngImage {
 	 */
 	public static PngImage read(File inFile) throws IOException {
 		Objects.requireNonNull(inFile);
-		try (var in = new BufferedInputStream(new FileInputStream(inFile))) {
+		try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(inFile))) {
 			return read(in);
 		}
 	}
@@ -78,9 +78,9 @@ public final class PngImage {
 	public static PngImage read(InputStream in) throws IOException {
 		Objects.requireNonNull(in);
 		XngFile xng = XngFile.read(in, true);
-		if (xng.type() != XngFile.Type.PNG)
+		if (xng.type != XngFile.Type.PNG)
 			throw new IllegalArgumentException("File signature is not PNG");
-		return new PngImage(xng.chunks());
+		return new PngImage(xng.chunks);
 	}
 	
 	
@@ -140,80 +140,75 @@ public final class PngImage {
 	
 	/** The chunks positioned after the IDAT chunks. */
 	public List<Chunk> afterIdats = new ArrayList<>();
-	
-	
+
+	enum State {
+		BEFORE_IHDR,
+		AFTER_IHDR,
+		DURING_IDATS,
+		AFTER_IDATS,
+		AFTER_IEND,
+	}
+
 	/**
 	 * Constructs a blank PNG image where all fields are initially empty (not {@code null}).
 	 */
 	public PngImage() {}
-	
-	
+
 	private PngImage(List<Chunk> chunks) {
-		enum State {
-			BEFORE_IHDR,
-			AFTER_IHDR,
-			DURING_IDATS,
-			AFTER_IDATS,
-			AFTER_IEND,
-		}
 		State state = State.BEFORE_IHDR;
 		Set<String> seenChunkTypes = new HashSet<>();
 		for (Chunk chunk : chunks) {
 			String type = chunk.getType();
 			if (!seenChunkTypes.add(type) && UNIQUE_CHUNK_TYPES.contains(type))
 				throw new IllegalArgumentException("Duplicate " + type + " chunk");
-			
-			state = switch (state) {
-				case BEFORE_IHDR -> {
-					if (chunk instanceof Ihdr chk) {
-						ihdr = Optional.of(chk);
-						yield State.AFTER_IHDR;
+
+			switch(state){
+				case BEFORE_IHDR:
+					if(chunk instanceof Ihdr) {
+						ihdr = Optional.of((Ihdr) chunk);
+						state = State.AFTER_IHDR;
 					} else
 						throw new IllegalArgumentException("Expected IHDR chunk");
-				}
-				
-				case AFTER_IHDR -> {
-					if (chunk instanceof Idat chk1) {
-						idats.add(chk1);
-						yield State.DURING_IDATS;
+					break;
+				case AFTER_IHDR:
+					if (chunk instanceof Idat) {
+						idats.add((Idat) chunk);
+						state = State.DURING_IDATS;
 					} else if (chunk instanceof Iend)
 						throw new IllegalArgumentException("Unexpected IEND chunk");
 					else {
 						afterIhdr.add(chunk);
-						yield State.AFTER_IHDR;
+						state = State.AFTER_IHDR;
 					}
-				}
-				
-				case DURING_IDATS -> {
+					break;
+				case DURING_IDATS:
 					if (chunk instanceof Plte)
 						throw new IllegalArgumentException("Unexpected PLTE chunk");
-					else if (chunk instanceof Idat chk) {
-						idats.add(chk);
-						yield State.DURING_IDATS;
+					else if ( Idat.class.isInstance(chunk) ) {
+						idats.add((Idat) chunk);
+						state = State.DURING_IDATS;
 					} else if (chunk instanceof Iend)
-						yield State.AFTER_IEND;
+						state = State.AFTER_IEND;
 					else {
 						afterIdats.add(chunk);
-						yield State.AFTER_IDATS;
+						state = State.AFTER_IDATS;
 					}
-				}
-				
-				case AFTER_IDATS -> {
+					break;
+				case AFTER_IDATS:
 					if (chunk instanceof Plte)
 						throw new IllegalArgumentException("Unexpected PLTE chunk");
 					else if (chunk instanceof Iend)
-						yield State.AFTER_IEND;
+						state = State.AFTER_IEND;
 					else if (chunk instanceof Idat)
 						throw new IllegalArgumentException("Non-consecutive IDAT chunk");
 					else {
 						afterIdats.add(chunk);
-						yield State.AFTER_IDATS;
+						state = State.AFTER_IDATS;
 					}
-				}
-				
-				case AFTER_IEND ->
+					break;
+				case AFTER_IEND:
 					throw new IllegalArgumentException("Unexpected chunk after IEND");
-			};
+			}
 		}
 		if (state != State.AFTER_IEND)
 			throw new IllegalArgumentException("Missing some required chunks");
@@ -273,7 +268,7 @@ public final class PngImage {
 	 */
 	public void write(File outFile) throws IOException {
 		Objects.requireNonNull(outFile);
-		try (var out = new BufferedOutputStream(new FileOutputStream(outFile))) {
+		try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outFile))) {
 			write(out);
 		}
 	}

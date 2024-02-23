@@ -20,17 +20,20 @@ import java.util.Objects;
  * interpretation of this chunk depends on the color type in the IHDR chunk.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11tRNS
  */
-public record Trns(byte[] data) implements BytesDataChunk {
+public class Trns implements BytesDataChunk {
 	
 	static final String TYPE = "tRNS";
-	
-	
+	private final byte[] data;
+
+
 	/*---- Constructors and factory ----*/
 	
-	public Trns {
+	public Trns(byte[] data) {
 		Objects.requireNonNull(data);
 		if (data.length > 256)
 			throw new IllegalArgumentException("Data length out of range");
+
+		this.data = data;
 	}
 	
 	
@@ -62,5 +65,10 @@ public record Trns(byte[] data) implements BytesDataChunk {
 	@Override public String getType() {
 		return TYPE;
 	}
-	
+
+	@Override
+	public byte[] data() {
+		return data;
+	}
+
 }

@@ -18,20 +18,23 @@ import java.util.Objects;
  * should be treated as immutable, but arrays are not copied defensively.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11PLTE
  */
-public record Plte(byte[] data) implements BytesDataChunk {
+public class Plte implements BytesDataChunk {
 	
 	static final String TYPE = "PLTE";
-	
-	
+	private final byte[] data;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Plte {
+	public Plte(byte[] data) {
 		Objects.requireNonNull(data);
 		if (data.length % 3 != 0)
 			throw new IllegalArgumentException("Invalid data length");
 		int numEntries = data.length / 3;
 		if (!(1 <= numEntries && numEntries <= 256))
 			throw new IllegalArgumentException("Number of entries out of range");
+
+		this.data = data;
 	}
 	
 	
@@ -46,5 +49,9 @@ public record Plte(byte[] data) implements BytesDataChunk {
 	@Override public String getType() {
 		return TYPE;
 	}
-	
+
+	@Override
+	public byte[] data() {
+		return data;
+	}
 }

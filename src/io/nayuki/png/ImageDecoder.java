@@ -14,12 +14,18 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.InflaterInputStream;
+
+import io.nayuki.png.chunk.Chunk;
 import io.nayuki.png.chunk.Custom;
 import io.nayuki.png.chunk.Ihdr;
 import io.nayuki.png.chunk.Plte;
@@ -54,21 +60,42 @@ public final class ImageDecoder {
 		// Check header chunk
 		Objects.requireNonNull(png);
 		Ihdr ihdr = png.ihdr.orElseThrow(() -> new IllegalArgumentException("Missing IHDR chunk"));
+
 		// Force exhaustive matches at compile time
-		int discard0 = switch (ihdr.compressionMethod()) {
+		/*
+		int discard0 = switch (ihdr.compressionMethod) {
 			case ZLIB_DEFLATE -> 0;
 		};
-		int discard1 = switch (ihdr.filterMethod()) {
+		int discard1 = switch (ihdr.filterMethod) {
 			case ADAPTIVE -> 0;
 		};
 		assert discard0 + discard1 == 0;
+		//*/
+		//@todo
+		assert ihdr.compressionMethod == Chunk.CompressionMethod.ZLIB_DEFLATE
+				&& ihdr.filterMethod == Ihdr.FilterMethod.ADAPTIVE;
 		
 		// Decode image by color type
-		return (switch (ihdr.colorType()) {
-			case TRUE_COLOR, TRUE_COLOR_WITH_ALPHA -> new RgbaDecoder   (png);
-			case GRAYSCALE , GRAYSCALE_WITH_ALPHA  -> new GrayDecoder   (png);
-			case INDEXED_COLOR                     -> new PaletteDecoder(png);
-		}).decode();
+		Decoder dec;
+		switch (ihdr.colorType){
+			/*
+			case TRUE_COLOR:
+			case TRUE_COLOR_WITH_ALPHA:
+				dec = new RgbaDecoder(png);
+				break;
+				//*/
+			case GRAYSCALE:
+			case GRAYSCALE_WITH_ALPHA:
+				dec = new GrayDecoder(png);
+				break;
+			case INDEXED_COLOR:
+				dec = new PaletteDecoder(png);
+				break;
+			default:
+				dec = new RgbaDecoder(png);
+		}
+
+		return dec.decode();
 	}
 	
 	
@@ -86,7 +113,7 @@ public final class ImageDecoder {
 		protected Decoder(PngImage png) {
 			super(png.ihdr.orElseThrow(() -> new IllegalArgumentException("Missing IHDR chunk")));
 			this.png = png;
-			inBitDepth = ihdr.bitDepth();
+			inBitDepth = ihdr.bitDepth;
 			sbit = PngImage.getChunk(Sbit.class, png.afterIhdr);
 			trns = PngImage.getChunk(Trns.class, png.afterIhdr);
 			Stream.concat(png.afterIhdr.stream(), png.afterIdats.stream())
@@ -98,12 +125,19 @@ public final class ImageDecoder {
 		
 		public final Object decode() {
 			// Virtually concatenate bytes from all data chunks, then decompress
+			/*
 			List<InputStream> ins = png.idats.stream()
 				.map(idat -> (InputStream)new ByteArrayInputStream(idat.data()))
 				.toList();
-			var in0 = new SequenceInputStream(Collections.enumeration(ins));
-			var in1 = new InflaterInputStream(in0);
-			try (var in2 = din = new DataInputStream(in1)) {
+			SequenceInputStream in0 = new SequenceInputStream(Collections.enumeration(ins));
+			//*/
+
+			InputStream[] ins = (InputStream[]) png.idats.stream()
+					.map(idat -> (InputStream)new ByteArrayInputStream(idat.data()))
+					.toArray();
+			SequenceInputStream in0 = new SequenceInputStream( Collections.enumeration( Arrays.asList(ins) ));
+			InflaterInputStream in1 = new InflaterInputStream(in0);
+			try (DataInputStream in2 = din = new DataInputStream(in1)) {
 				doInterlace();
 				din = null;
 				
@@ -155,22 +189,22 @@ public final class ImageDecoder {
 			input.readFully(currentRow, filterStride, currentRow.length - filterStride);
 			
 			// Do un-filtering
-			switch (filter) {
-				case 0 -> {  // None
-				}
-				case 1 -> {  // Sub
+			switch (filter){
+				case 0:		// None
+					break;
+				case 1:		// Sub
 					for (int i = filterStride; i < currentRow.length; i++)
 						currentRow[i] += currentRow[i - filterStride];
-				}
-				case 2 -> {  // Up
+					break;
+				case 2:		// Up
 					for (int i = filterStride; i < currentRow.length; i++)
 						currentRow[i] += previousRow[i];
-				}
-				case 3 -> {  // Average
+					break;
+				case 3:		// Average
 					for (int i = filterStride; i < currentRow.length; i++)
 						currentRow[i] += ((currentRow[i - filterStride] & 0xFF) + (previousRow[i] & 0xFF)) >>> 1;
-				}
-				case 4 -> {  // Paeth
+					break;
+				case 4:		// Paeth
 					for (int i = filterStride; i < currentRow.length; i++) {
 						int a = currentRow[i - filterStride] & 0xFF;  // Left
 						int b = previousRow[i] & 0xFF;  // Up
@@ -185,8 +219,9 @@ public final class ImageDecoder {
 						else pr = c;
 						currentRow[i] += pr;
 					}
-				}
-				default -> throw new IllegalArgumentException("Unsupported filter type: " + filter);
+					break;
+				default:
+					throw new IllegalArgumentException("Unsupported filter type: " + filter);
 			}
 			return currentRow;
 		}
@@ -208,7 +243,7 @@ public final class ImageDecoder {
 			
 			// Handle significant bits
 			int outRBits = inBitDepth, outGBits = inBitDepth, outBBits = inBitDepth,
-				outABits = ihdr.colorType() == Ihdr.ColorType.TRUE_COLOR ? 0 : inBitDepth;
+				outABits = ihdr.colorType == Ihdr.ColorType.TRUE_COLOR ? 0 : inBitDepth;
 			if (sbit.isPresent()) {
 				byte[] sb = sbit.get().data();
 				if (sb.length != (outABits > 0 ? 4 : 3))
@@ -223,7 +258,8 @@ public final class ImageDecoder {
 			}
 			
 			// Handle transparent color
-			if (trns.isEmpty())
+			//if (trns.isEmpty())
+			if (!trns.isPresent())
 				transparentColor = -1;
 			else {
 				if (outABits > 0)
@@ -241,7 +277,7 @@ public final class ImageDecoder {
 					outABits = 1;
 			}
 			
-			result = new BufferedRgbaImage(ihdr.width(), ihdr.height(), new int[]{outRBits, outGBits, outBBits, outABits});
+			result = new BufferedRgbaImage(ihdr.width, ihdr.height, new int[]{outRBits, outGBits, outBBits, outABits});
 		}
 		
 		
@@ -254,44 +290,47 @@ public final class ImageDecoder {
 			boolean hasAlpha = outBitDepths[3] > 0 && transparentColor == -1;
 			int mode = (inBitDepth / 8 - 1) * 2 + (hasAlpha ? 1 : 0);
 			
-			int filterStride = Math.ceilDiv(inBitDepth * (hasAlpha ? 4 : 3), 8);
-			var dec = new RowDecoder(din, filterStride,
-				Math.toIntExact(Math.ceilDiv((long)subwidth * inBitDepth * (hasAlpha ? 4 : 3), 8)));
+			int filterStride = -Math.floorDiv(-inBitDepth * (hasAlpha ? 4 : 3), 8);
+			RowDecoder dec = new RowDecoder(din, filterStride,
+				Math.toIntExact( -Math.floorDiv(-(long)subwidth * inBitDepth * (hasAlpha ? 4 : 3), (long)8)) );
 			for (int y = 0; y < subheight; y++) {
 				byte[] row = dec.readRow();
 				
 				for (int x = 0, i = filterStride; x < subwidth; x++, i += filterStride) {
 					int r, g, b, a;
 					long temp;
+
 					switch (mode) {
-						case 0 -> {
+						case 0:
 							r = row[i + 0] & 0xFF;
 							g = row[i + 1] & 0xFF;
 							b = row[i + 2] & 0xFF;
 							temp = (long)r << 48 | (long)g << 32 | (long)b << 16;
 							a = temp != transparentColor ? 0xFF : 0x00;
-						}
-						case 1 -> {
+							break;
+						case 1:
 							r = row[i + 0] & 0xFF;
 							g = row[i + 1] & 0xFF;
 							b = row[i + 2] & 0xFF;
 							a = row[i + 3] & 0xFF;
-						}
-						case 2 -> {
+							break;
+						case 2:
 							r = (row[i + 0] & 0xFF) << 8 | (row[i + 1] & 0xFF) << 0;
 							g = (row[i + 2] & 0xFF) << 8 | (row[i + 3] & 0xFF) << 0;
 							b = (row[i + 4] & 0xFF) << 8 | (row[i + 5] & 0xFF) << 0;
 							temp = (long)r << 48 | (long)g << 32 | (long)b << 16;
 							a = temp != transparentColor ? 0xFFFF : 0x00;
-						}
-						case 3 -> {
+							break;
+						case 3:		// Average
 							r = (row[i + 0] & 0xFF) << 8 | (row[i + 1] & 0xFF) << 0;
 							g = (row[i + 2] & 0xFF) << 8 | (row[i + 3] & 0xFF) << 0;
 							b = (row[i + 4] & 0xFF) << 8 | (row[i + 5] & 0xFF) << 0;
 							a = (row[i + 6] & 0xFF) << 8 | (row[i + 7] & 0xFF) << 0;
-						}
-						default -> throw new AssertionError("Unreachable value");
+							break;
+						default:
+							throw new AssertionError("Unreachable value");
 					}
+
 					r >>>= rShift;
 					g >>>= gShift;
 					b >>>= bShift;
@@ -323,7 +362,7 @@ public final class ImageDecoder {
 			super(png);
 			
 			// Handle significant bits
-			int outWBits = inBitDepth, outABits = ihdr.colorType() == Ihdr.ColorType.GRAYSCALE ? 0 : inBitDepth;
+			int outWBits = inBitDepth, outABits = ihdr.colorType == Ihdr.ColorType.GRAYSCALE ? 0 : inBitDepth;
 			if (sbit.isPresent()) {
 				byte[] sb = sbit.get().data();
 				if (sb.length != (outABits > 0 ? 2 : 1))
@@ -336,7 +375,8 @@ public final class ImageDecoder {
 			}
 			
 			// Handle transparent color
-			if (trns.isEmpty())
+			//if (trns.isEmpty())
+			if(!trns.isPresent())
 				transparentColor = -1;
 			else {
 				if (outABits > 0)
@@ -354,7 +394,7 @@ public final class ImageDecoder {
 					outABits = 1;
 			}
 			
-			result = new BufferedGrayImage(ihdr.width(), ihdr.height(), new int[]{outWBits, outABits});
+			result = new BufferedGrayImage(ihdr.width, ihdr.height, new int[]{outWBits, outABits});
 		}
 		
 		
@@ -365,36 +405,39 @@ public final class ImageDecoder {
 			boolean hasAlpha = outBitDepths[1] > 0;
 			int mode = inBitDepth >= 8 ? (inBitDepth / 8 - 1) * 2 + (hasAlpha ? 1 : 0) : 4;
 			
-			int filterStride = Math.ceilDiv(inBitDepth * (hasAlpha ? 2 : 1), 8);
-			var dec = new RowDecoder(din, filterStride,
-				Math.toIntExact(Math.ceilDiv((long)subwidth * inBitDepth * (hasAlpha ? 2 : 1), 8)));
+			int filterStride = -Math.floorDiv(-inBitDepth * (hasAlpha ? 2 : 1), 8);
+			RowDecoder dec = new RowDecoder(din, filterStride,
+				Math.toIntExact( -Math.floorDiv(-(long)subwidth * inBitDepth * (hasAlpha ? 2 : 1), (long)8)) );
 			for (int y = 0; y < subheight; y++) {
 				byte[] row = dec.readRow();
 				
 				if (mode < 4) {
 					for (int x = 0, i = filterStride; x < subwidth; x++, i += filterStride) {
 						int w, a, temp;
-						switch (mode) {
-							case 0 -> {
+
+						switch (mode){
+							case 0:
 								w = row[i + 0] & 0xFF;
 								temp = w << 16;
 								a = temp != transparentColor ? 0xFF : 0x00;
-							}
-							case 1 -> {
+								break;
+							case 1:
 								w = row[i + 0] & 0xFF;
 								a = row[i + 1] & 0xFF;
-							}
-							case 2 -> {
+								break;
+							case 2:
 								w = (row[i + 0] & 0xFF) << 8 | (row[i + 1] & 0xFF) << 0;
 								temp = w << 16;
 								a = temp != transparentColor ? 0xFFFF : 0x00;
-							}
-							case 3 -> {
+								break;
+							case 3:
 								w = (row[i + 0] & 0xFF) << 8 | (row[i + 1] & 0xFF) << 0;
 								a = (row[i + 2] & 0xFF) << 8 | (row[i + 3] & 0xFF) << 0;
-							}
-							default -> throw new AssertionError("Unreachable value");
+								break;
+							default:
+								throw new AssertionError("Unreachable value");
 						}
+
 						w >>>= wShift;
 						a >>>= aShift;
 						result.setPixel(xOffset + x * xStep, yOffset + y * yStep,
@@ -454,7 +497,7 @@ public final class ImageDecoder {
 			// Handle palette and transparency
 			byte[] paletteBytes = PngImage.getChunk(Plte.class, png.afterIhdr)
 				.orElseThrow(() -> new IllegalArgumentException("Missing PLTE chunk")).data();
-			var palette = new long[paletteBytes.length / 3];
+			long[] palette = new long[paletteBytes.length / 3];
 			if (palette.length > (1 << inBitDepth))
 				throw new IllegalArgumentException("Palette length exceeds bit depth");
 			byte[] trnsBytes = trns.map(trns -> trns.data()).orElse(new byte[0]);
@@ -470,20 +513,21 @@ public final class ImageDecoder {
 				palette[i] = (long)r << 48 | (long)g << 32 | (long)b << 16 | (long)a << 0;
 			}
 			
-			result = new BufferedPaletteImage(ihdr.width(), ihdr.height(),
+			result = new BufferedPaletteImage(ihdr.width, ihdr.height,
 				new int[]{outRBits, outGBits, outBBits, outABits}, palette);
 		}
 		
 		
 		@Override protected void handleSubimage(int xOffset, int yOffset, int xStep, int yStep, int subwidth, int subheight) throws IOException {
 			int filterStride = 1;  // Equal to ceil(inBitDepth / 8)
-			var dec = new RowDecoder(din, filterStride,
-				Math.toIntExact(Math.ceilDiv((long)subwidth * inBitDepth, 8)));
+			RowDecoder dec = new RowDecoder(din, filterStride,
+				Math.toIntExact( -Math.floorDiv(-subwidth * inBitDepth, 8)) );
 			for (int y = 0; y < subheight; y++) {
 				byte[] row = dec.readRow();
-				
-				switch (inBitDepth) {
-					case 1, 2, 4 -> {
+				switch (inBitDepth){
+					case 1:
+					case 2:
+					case 4:
 						int xMask = 8 / inBitDepth - 1;
 						int shift = 8 - inBitDepth;
 						for (int x = 0, i = filterStride, b = 0; x < subwidth; x++, b = (b << inBitDepth) & 0xFF) {
@@ -493,13 +537,15 @@ public final class ImageDecoder {
 							}
 							result.setPixel(xOffset + x * xStep, yOffset + y * yStep, b >>> shift);
 						}
-					}
-					case 8 -> {
+						break;
+					case 8:
 						for (int x = 0, i = filterStride; x < subwidth; x++, i += filterStride)
 							result.setPixel(xOffset + x * xStep, yOffset + y * yStep, row[i] & 0xFF);
-					}
-					default -> throw new AssertionError("Unreachable value");
+						break;
+					default:
+						throw new AssertionError("Unreachable value");
 				}
+
 			}
 		}
 		

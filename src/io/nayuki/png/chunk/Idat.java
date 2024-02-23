@@ -18,15 +18,17 @@ import java.util.Objects;
  * The interpretation of this chunk depends extensively on the IHDR chunk.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11IDAT
  */
-public record Idat(byte[] data) implements BytesDataChunk {
+public class Idat implements BytesDataChunk {
 	
 	static final String TYPE = "IDAT";
-	
-	
+	private final byte[] data;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Idat {
+	public Idat(byte[] data) {
 		Objects.requireNonNull(data);
+		this.data =data;
 	}
 	
 	
@@ -41,5 +43,9 @@ public record Idat(byte[] data) implements BytesDataChunk {
 	@Override public String getType() {
 		return TYPE;
 	}
-	
+
+	@Override
+	public byte[] data() {
+		return data;
+	}
 }

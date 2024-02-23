@@ -20,30 +20,40 @@ import java.util.Objects;
  * should be treated as immutable, but arrays are not copied defensively.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11sPLT
  */
-public record Splt(
-		String paletteName,
-		int sampleDepth,
-		byte[] data)
-	implements Chunk {
-	
-	
+public class Splt implements Chunk {
+
 	static final String TYPE = "sPLT";
-	
-	
+	private final String paletteName;
+	private final int sampleDepth;
+	private final byte[] data;
+
 	/*---- Constructor and factory ----*/
 	
-	public Splt {
+	public Splt(
+			String paletteName,
+			int sampleDepth,
+			byte[] data) {
 		Util.checkKeyword(paletteName, true);
-		
-		int bytesPerEntry = switch (sampleDepth) {
-			case 8 -> 6;
-			case 16 -> 10;
-			default -> throw new IllegalArgumentException("Invalid sample depth");
-		};
+
+		int bytesPerEntry;
+		switch(sampleDepth){
+			case 8:
+				bytesPerEntry = 16;
+				break;
+			case 16:
+				bytesPerEntry = 10;
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid sample depth");
+		}
 		if (data.length % bytesPerEntry != 0)
 			throw new IllegalArgumentException("Invalid data length");
 		
 		Util.checkedLengthSum(paletteName, 2 * Byte.BYTES, data);
+
+		this.paletteName = paletteName;
+		this.sampleDepth = sampleDepth;
+		this.data = data;
 	}
 	
 	
@@ -65,7 +75,7 @@ public record Splt(
 	
 	@Override public void writeChunk(OutputStream out) throws IOException {
 		int dataLen = Util.checkedLengthSum(paletteName, 2 * Byte.BYTES, data);
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeString(paletteName, StandardCharsets.ISO_8859_1, true);
 			cout.writeUint8(sampleDepth);
 			cout.write(data);

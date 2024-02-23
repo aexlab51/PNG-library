@@ -18,15 +18,17 @@ import java.util.Objects;
  * using the specified rendering intent. Instances are immutable.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11sRGB
  */
-public record Srgb(RenderingIntent renderingIntent) implements SmallDataChunk {
+public class Srgb implements SmallDataChunk {
 	
 	static final String TYPE = "sRGB";
-	
-	
+	private final RenderingIntent renderingIntent;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Srgb {
+	public Srgb(RenderingIntent renderingIntent) {
 		Objects.requireNonNull(renderingIntent);
+		this.renderingIntent = renderingIntent;
 	}
 	
 	

@@ -17,23 +17,25 @@ import java.util.Objects;
  * color type, and various encoding methods. Instances are immutable.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11IHDR
  */
-public record Ihdr(
-		int width,
-		int height,
-		int bitDepth,
-		ColorType colorType,
-		CompressionMethod compressionMethod,
-		FilterMethod filterMethod,
-		InterlaceMethod interlaceMethod)
-	implements SmallDataChunk {
-	
-	
+public class Ihdr implements SmallDataChunk {
+
 	static final String TYPE = "IHDR";
-	
-	
+	public final int width, height, bitDepth;
+	public final ColorType colorType;
+	public final CompressionMethod compressionMethod;
+	public final FilterMethod filterMethod;
+	public final InterlaceMethod interlaceMethod;
+
 	/*---- Constructor and factory ----*/
 	
-	public Ihdr {
+	public Ihdr(
+			int width,
+			int height,
+			int bitDepth,
+			ColorType colorType,
+			CompressionMethod compressionMethod,
+			FilterMethod filterMethod,
+			InterlaceMethod interlaceMethod) {
 		if (width <= 0)
 			throw new IllegalArgumentException("Non-positive width");
 		if (height <= 0)
@@ -45,6 +47,14 @@ public record Ihdr(
 		Objects.requireNonNull(compressionMethod);
 		Objects.requireNonNull(filterMethod);
 		Objects.requireNonNull(interlaceMethod);
+
+		this.width = width;
+		this.height = height;
+		this.bitDepth = bitDepth;
+		this.colorType = colorType;
+		this.compressionMethod = compressionMethod;
+		this.filterMethod = filterMethod;
+		this.interlaceMethod = interlaceMethod;
 	}
 	
 	

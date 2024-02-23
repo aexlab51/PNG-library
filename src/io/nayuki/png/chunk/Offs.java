@@ -18,22 +18,28 @@ import java.util.Objects;
  * location with respect to a larger screen. Instances are immutable.
  * @see https://ftp-osl.osuosl.org/pub/libpng/documents/pngext-1.5.0.html#C.oFFs
  */
-public record Offs(
-		int xPosition,
-		int yPosition,
-		UnitSpecifier unitSpecifier)
-	implements SmallDataChunk {
+public class Offs implements SmallDataChunk {
 	
 	
 	static final String TYPE = "oFFs";
-	
-	
+	private final int xPosition;
+	private final int yPosition;
+	private final UnitSpecifier unitSpecifier;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Offs {
+	public Offs(
+		int xPosition,
+		int yPosition,
+		UnitSpecifier unitSpecifier) {
 		if (xPosition == Integer.MIN_VALUE || yPosition == Integer.MIN_VALUE)
 			throw new IllegalArgumentException("Invalid int32 value");
 		Objects.requireNonNull(unitSpecifier);
+
+		this.xPosition = xPosition;
+		this.yPosition = yPosition;
+		this.unitSpecifier = unitSpecifier;
 	}
 	
 	

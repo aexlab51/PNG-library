@@ -96,7 +96,7 @@ final class ChunkReader implements AutoCloseable {
 	
 	
 	public byte[] readRemainingBytes() throws IOException {
-		var result = new byte[dataRemaining];
+		byte[] result = new byte[dataRemaining];
 		readFully(result, 0, result.length);
 		return result;
 	}
@@ -140,7 +140,7 @@ final class ChunkReader implements AutoCloseable {
 	
 	public String readString(Charset cs, boolean endByNul) throws IOException {
 		if (endByNul) {
-			var buf = new byte[1];
+			byte[] buf = new byte[1];
 			int bufLen = 0;
 			while (true) {
 				if (dataRemaining <= 0)
@@ -163,7 +163,7 @@ final class ChunkReader implements AutoCloseable {
 			}
 			return new String(buf, 0, bufLen, cs);
 		} else {
-			var buf = new byte[dataRemaining];
+			byte[] buf = new byte[dataRemaining];
 			readFully(buf, 0, buf.length);
 			return new String(buf, cs);
 		}

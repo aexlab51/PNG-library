@@ -24,10 +24,15 @@ abstract class Interlacer {
 	
 	
 	protected void doInterlace() throws IOException {
-		int xStep = switch (ihdr.interlaceMethod()) {
-			case NONE  -> 1;
-			case ADAM7 -> 8;
-		};
+		int xStep = 0;
+		switch(ihdr.interlaceMethod){
+			case NONE:
+				xStep = 1;
+				break;
+			case ADAM7:
+				xStep = 8;
+				break;
+		}
 		int yStep = xStep;
 		handleSubimage(0, 0, xStep, yStep);
 		while (yStep > 1) {
@@ -44,8 +49,10 @@ abstract class Interlacer {
 	
 	
 	private void handleSubimage(int xOffset, int yOffset, int xStep, int yStep) throws IOException {
-		int subwidth  = Math.ceilDiv(ihdr.width () - xOffset, xStep);
-		int subheight = Math.ceilDiv(ihdr.height() - yOffset, yStep);
+		//int subwidth  = Math.ceilDiv(ihdr.width - xOffset, xStep);
+		//int subheight = Math.ceilDiv(ihdr.height - yOffset, yStep);
+		int subwidth  = -Math.floorDiv(xOffset - ihdr.width, xStep);
+		int subheight = -Math.floorDiv(yOffset - ihdr.height, yStep);
 		if (subwidth > 0 && subheight > 0)
 			handleSubimage(xOffset, yOffset, xStep, yStep, subwidth, subheight);
 	}

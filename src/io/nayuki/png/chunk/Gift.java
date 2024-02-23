@@ -19,25 +19,26 @@ import java.util.Objects;
  * provides backward compatibility for GIF images. Instances are immutable.
  * @see https://ftp-osl.osuosl.org/pub/libpng/documents/pngext-1.5.0.html#DC.gIFt
  */
-public record Gift(
-		int textGridLeft,
-		int textGridTop,
-		int textGridWidth,
-		int textGridHeight,
-		int characterCellWidth,
-		int characterCellHeight,
-		int textForegroundColor,
-		int textBackgroundColor,
-		String text)
-	implements Chunk {
-	
-	
+public class Gift implements Chunk {
+
 	static final String TYPE = "gIFt";
-	
-	
+	private final int textGridLeft, textGridTop, textGridWidth, textGridHeight;
+	private final int characterCellWidth, characterCellHeight;
+	private final int textForegroundColor, textBackgroundColor;
+	private final String text;
+
 	/*---- Constructor and factory ----*/
 	
-	public Gift {
+	public Gift(
+			int textGridLeft,
+			int textGridTop,
+			int textGridWidth,
+			int textGridHeight,
+			int characterCellWidth,
+			int characterCellHeight,
+			int textForegroundColor,
+			int textBackgroundColor,
+			String text) {
 		if (textGridLeft == Integer.MIN_VALUE || textGridTop == Integer.MIN_VALUE ||
 				textGridWidth == Integer.MIN_VALUE || textGridHeight == Integer.MIN_VALUE)
 			throw new IllegalArgumentException("Invalid int32 value");
@@ -50,6 +51,16 @@ public record Gift(
 				throw new IllegalArgumentException("Invalid byte in ASCII text");
 		}
 		Util.checkedLengthSum(4 * Integer.BYTES, 2 * Byte.BYTES, 2 * 3 * Byte.BYTES, text);
+
+		this.textGridLeft = textGridLeft;
+		this.textGridTop = textGridTop;
+		this.textGridWidth = textGridWidth;
+		this.textGridHeight = textGridHeight;
+		this.characterCellWidth = characterCellWidth;
+		this.characterCellHeight = characterCellHeight;
+		this.textForegroundColor = textForegroundColor;
+		this.textBackgroundColor = textBackgroundColor;
+		this.text = text;
 	}
 	
 	
@@ -86,7 +97,7 @@ public record Gift(
 	
 	@Override public void writeChunk(OutputStream out) throws IOException {
 		int dataLen = Util.checkedLengthSum(4 * Integer.BYTES, 2 * Byte.BYTES, 2 * 3 * Byte.BYTES, text);
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeInt32(textGridLeft  );
 			cout.writeInt32(textGridTop   );
 			cout.writeInt32(textGridWidth );

@@ -20,24 +20,27 @@ import java.util.Objects;
  * should be treated as immutable, but arrays are not copied defensively.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11iCCP
  */
-public record Iccp(
-		String profileName,
-		CompressionMethod compressionMethod,
-		byte[] compressedProfile)
-	implements Chunk {
+public class Iccp implements Chunk {
 	
 	
 	static final String TYPE = "iCCP";
-	
-	
+	private final String profileName;
+	private final CompressionMethod compressionMethod;
+	private final byte[] compressedProfile;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Iccp {
+	public Iccp(String profileName, CompressionMethod compressionMethod, byte[] compressedProfile) {
 		Util.checkKeyword(profileName, false);
 		Objects.requireNonNull(compressionMethod);
 		Objects.requireNonNull(compressedProfile);
 		compressionMethod.decompress(compressedProfile);
 		Util.checkedLengthSum(profileName, 2 * Byte.BYTES, compressedProfile);
+
+		this.profileName = profileName;
+		this.compressionMethod = compressionMethod;
+		this.compressedProfile = compressedProfile;
 	}
 	
 	
@@ -59,7 +62,7 @@ public record Iccp(
 	
 	@Override public void writeChunk(OutputStream out) throws IOException {
 		int dataLen = Util.checkedLengthSum(profileName, 2 * Byte.BYTES, compressedProfile);
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeString(profileName, StandardCharsets.ISO_8859_1, true);
 			cout.writeUint8(compressionMethod);
 			cout.write(compressedProfile);

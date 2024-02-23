@@ -20,22 +20,25 @@ import java.util.Objects;
  * be treated as immutable, but arrays are not copied defensively.
  * @see https://ftp-osl.osuosl.org/pub/libpng/documents/pngext-1.5.0.html#C.pCAL
  */
-public record Pcal(
-		String calibrationName,
-		String unitName,
-		int originalZero,
-		int originalMax,
-		EquationType equationType,
-		String... parameters)
-	implements Chunk {
-	
-	
+public class Pcal implements Chunk {
+
 	static final String TYPE = "pCAL";
-	
-	
+	private final String calibrationName, unitName;
+	private final int originalZero, originalMax;
+	private final EquationType equationType;
+	private final String[] parameters;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Pcal {
+	public Pcal(
+			String calibrationName,
+			String unitName,
+			int originalZero,
+			int originalMax,
+			EquationType equationType,
+			String... parameters)
+	{
 		Util.checkKeyword(calibrationName, true);
 		Util.checkIso8859_1(unitName, false);
 		if (originalZero == Integer.MIN_VALUE || originalMax == Integer.MIN_VALUE)
@@ -51,10 +54,17 @@ public record Pcal(
 				throw new IllegalArgumentException("Invalid number string");
 		}
 		
-		var params = new Object[parameters.length];
+		Object[] params = new Object[parameters.length];
 		System.arraycopy(parameters, 0, params, 0, params.length);
 		Util.checkedLengthSum(calibrationName, Byte.BYTES, 2 * Integer.BYTES,
 			2 * Byte.BYTES, unitName, params.length * Byte.BYTES, Util.checkedLengthSum(params));
+
+		this.calibrationName = calibrationName;
+		this.unitName = unitName;
+		this.originalZero = originalZero;
+		this.originalMax = originalMax;
+		this.equationType = equationType;
+		this.parameters = parameters;
 	}
 	
 	
@@ -66,7 +76,7 @@ public record Pcal(
 		EquationType equationType = in.readEnum(EquationType.values());
 		int numParameters = in.readUint8();
 		String unitName = in.readString(StandardCharsets.ISO_8859_1, true);
-		var parameters = new String[numParameters];
+		String[] parameters = new String[numParameters];
 		for (int i = 0; i < parameters.length; i++)
 			parameters[i] = in.readString(StandardCharsets.US_ASCII, (i < parameters.length - 1));
 		return new Pcal(calibName, unitName, originalZero, originalMax, equationType, parameters);
@@ -81,12 +91,12 @@ public record Pcal(
 	
 	
 	@Override public void writeChunk(OutputStream out) throws IOException {
-		var params = new Object[parameters.length];
+		Object[] params = new Object[parameters.length];
 		System.arraycopy(parameters, 0, params, 0, params.length);
 		int dataLen = Util.checkedLengthSum(calibrationName, 1, 2 * Integer.BYTES,
 			2 * Byte.BYTES, unitName, params.length, Util.checkedLengthSum(params));
 		
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeString(calibrationName, StandardCharsets.ISO_8859_1, true);
 			cout.writeInt32(originalZero);
 			cout.writeInt32(originalMax);

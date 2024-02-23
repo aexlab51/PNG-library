@@ -18,22 +18,24 @@ import java.util.Objects;
  * compressed. Instances should be treated as immutable, but arrays are not copied defensively.
  * @see https://wiki.mozilla.org/APNG_Specification#.60fdAT.60:_The_Frame_Data_Chunk
  */
-public record Fdat(
-		int sequence,
-		byte[] data)
-	implements Chunk {
+public class Fdat implements Chunk {
 	
 	
 	static final String TYPE = "fdAT";
-	
-	
+	private final int sequence;
+	private final byte[] data;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Fdat {
+	public Fdat(int sequence, byte[] data) {
 		if (sequence < 0)
 			throw new IllegalArgumentException("Invalid sequence number");
 		Objects.requireNonNull(data);
 		Util.checkedLengthSum(Integer.BYTES, data);
+
+		this.sequence = sequence;
+		this.data = data;
 	}
 	
 	
@@ -54,7 +56,7 @@ public record Fdat(
 	
 	@Override public void writeChunk(OutputStream out) throws IOException {
 		int dataLen = Util.checkedLengthSum(Integer.BYTES, data);
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeInt32(sequence);
 			cout.write(data);
 		}

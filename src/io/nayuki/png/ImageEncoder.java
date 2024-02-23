@@ -132,8 +132,8 @@ public final class ImageEncoder {
 		
 		
 		public PngImage encode() {
-			var bout = new ByteArrayOutputStream();
-			try (var out = dout = new DeflaterOutputStream(bout)) {
+			ByteArrayOutputStream bout = new ByteArrayOutputStream();
+			try (OutputStream out = dout = new DeflaterOutputStream(bout)) {
 				doInterlace();
 			} catch (IOException e) {
 				throw new AssertionError("Unreachable exception", e);
@@ -168,22 +168,22 @@ public final class ImageEncoder {
 		
 		
 		@Override protected void handleSubimage(int xOffset, int yOffset, int xStep, int yStep, int subwidth, int subheight) throws IOException {
-			int bytesPerRow = Math.toIntExact(Math.ceilDiv((long)subwidth * bitDepth * (hasAlpha ? 4 : 3), 8) + 1);
-			var filtersAndSamples = new byte[Math.multiplyExact(bytesPerRow, subheight)];
+			int bytesPerRow = Math.toIntExact( -Math.floorDiv( -(long)subwidth * bitDepth * (hasAlpha ? 4 : 3), (long)8) + 1);
+			byte[] filtersAndSamples = new byte[Math.multiplyExact(bytesPerRow, subheight)];
 			for (int y = 0, i = 0; y < subheight; y++) {
 				filtersAndSamples[i] = 0;
 				i++;
-				
+
 				switch (bitDepth * 10 + (hasAlpha ? 1 : 0)) {
-					case 8_0 -> {
+					case 8_0:
 						for (int x = 0; x < subwidth; x++, i += 3) {
 							long val = image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
 							filtersAndSamples[i + 0] = (byte)(val >>> 48);
 							filtersAndSamples[i + 1] = (byte)(val >>> 32);
 							filtersAndSamples[i + 2] = (byte)(val >>> 16);
 						}
-					}
-					case 8_1 -> {
+						break;
+					case 8_1:
 						for (int x = 0; x < subwidth; x++, i += 4) {
 							long val = image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
 							filtersAndSamples[i + 0] = (byte)(val >>> 48);
@@ -191,8 +191,8 @@ public final class ImageEncoder {
 							filtersAndSamples[i + 2] = (byte)(val >>> 16);
 							filtersAndSamples[i + 3] = (byte)(val >>>  0);
 						}
-					}
-					case 16_0 -> {
+						break;
+					case 16_0:
 						for (int x = 0; x < subwidth; x++, i += 6) {
 							long val = image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
 							filtersAndSamples[i + 0] = (byte)(val >>> 56);
@@ -202,8 +202,8 @@ public final class ImageEncoder {
 							filtersAndSamples[i + 4] = (byte)(val >>> 24);
 							filtersAndSamples[i + 5] = (byte)(val >>> 16);
 						}
-					}
-					case 16_1 -> {
+						break;
+					case 16_1:
 						for (int x = 0; x < subwidth; x++, i += 8) {
 							long val = image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
 							filtersAndSamples[i + 0] = (byte)(val >>> 56);
@@ -215,13 +215,14 @@ public final class ImageEncoder {
 							filtersAndSamples[i + 6] = (byte)(val >>>  8);
 							filtersAndSamples[i + 7] = (byte)(val >>>  0);
 						}
-					}
-					default -> throw new AssertionError("Unreachable value");
+						break;
+					default:
+						throw new AssertionError("Unreachable value");
 				}
 			}
 			dout.write(filtersAndSamples);
 		}
-		
+
 	}
 	
 	
@@ -247,14 +248,16 @@ public final class ImageEncoder {
 		
 		
 		@Override protected void handleSubimage(int xOffset, int yOffset, int xStep, int yStep, int subwidth, int subheight) throws IOException {
-			int bytesPerRow = Math.toIntExact(Math.ceilDiv((long)subwidth * bitDepth * (hasAlpha ? 2 : 1), 8) + 1);
-			var filtersAndSamples = new byte[Math.multiplyExact(bytesPerRow, subheight)];
+			int bytesPerRow = Math.toIntExact( -Math.floorDiv( -(long)subwidth * bitDepth * (hasAlpha ? 2 : 1), (long)8) + 1);
+			byte[] filtersAndSamples = new byte[Math.multiplyExact(bytesPerRow, subheight)];
 			for (int y = 0, i = 0; y < subheight; y++) {
 				filtersAndSamples[i] = 0;
 				i++;
 				
 				switch (bitDepth * 10 + (hasAlpha ? 1 : 0)) {
-					case 1_0, 2_0, 4_0 -> {
+					case 1_0:
+					case 2_0:
+					case 4_0:
 						int xMask = 8 / bitDepth - 1;
 						int b = 0;
 						for (int x = 0; x < subwidth; x++) {
@@ -269,28 +272,28 @@ public final class ImageEncoder {
 							filtersAndSamples[i] = (byte)(b << (8 - (subwidth & xMask) * bitDepth));
 							i++;
 						}
-					}
-					case 8_0 -> {
+						break;
+					case 8_0:
 						for (int x = 0; x < subwidth; x++, i += 1) {
 							int val = image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
 							filtersAndSamples[i + 0] = (byte)(val >>> 16);
 						}
-					}
-					case 8_1 -> {
+						break;
+					case 8_1:
 						for (int x = 0; x < subwidth; x++, i += 2) {
 							int val = image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
 							filtersAndSamples[i + 0] = (byte)(val >>> 16);
 							filtersAndSamples[i + 1] = (byte)(val >>>  0);
 						}
-					}
-					case 16_0 -> {
+						break;
+					case 16_0:
 						for (int x = 0; x < subwidth; x++, i += 2) {
 							int val = image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
 							filtersAndSamples[i + 0] = (byte)(val >>> 24);
 							filtersAndSamples[i + 1] = (byte)(val >>> 16);
 						}
-					}
-					case 16_1 -> {
+						break;
+					case 16_1:
 						for (int x = 0; x < subwidth; x++, i += 4) {
 							int val = image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
 							filtersAndSamples[i + 0] = (byte)(val >>> 24);
@@ -298,8 +301,9 @@ public final class ImageEncoder {
 							filtersAndSamples[i + 2] = (byte)(val >>>  8);
 							filtersAndSamples[i + 3] = (byte)(val >>>  0);
 						}
-					}
-					default -> throw new AssertionError("Unreachable value");
+						break;
+					default:
+						throw new AssertionError("Unreachable value");
 				}
 			}
 			dout.write(filtersAndSamples);
@@ -325,7 +329,7 @@ public final class ImageEncoder {
 			this.bitDepth = bitDepth;
 			
 			long[] palette = img.getPalette();
-			var paletteBytes = new byte[Math.multiplyExact(palette.length, 3)];
+			byte[] paletteBytes = new byte[Math.multiplyExact(palette.length, 3)];
 			int transpLen = 0;
 			{  // Up-convert RGB channels to 8 bits
 				long mul = (2 << 8) - 2;
@@ -353,7 +357,7 @@ public final class ImageEncoder {
 			}
 			result.afterIhdr.add(new Plte(paletteBytes));
 			if (img.getBitDepths()[3] > 0) {
-				var transpBytes = new byte[transpLen];
+				byte[] transpBytes = new byte[transpLen];
 				for (int i = 0; i < transpBytes.length; i++)
 					transpBytes[i] = (byte)palette[i];
 				result.afterIhdr.add(new Trns(transpBytes));
@@ -362,14 +366,16 @@ public final class ImageEncoder {
 		
 		
 		@Override protected void handleSubimage(int xOffset, int yOffset, int xStep, int yStep, int subwidth, int subheight) throws IOException {
-			int bytesPerRow = Math.toIntExact(Math.ceilDiv((long)subwidth * bitDepth, 8) + 1);
-			var filtersAndSamples = new byte[Math.multiplyExact(bytesPerRow, subheight)];
+			int bytesPerRow = Math.toIntExact( -Math.floorDiv(-(long)subwidth * bitDepth, (long)8) + 1);
+			byte[] filtersAndSamples = new byte[Math.multiplyExact(bytesPerRow, subheight)];
 			for (int y = 0, i = 0; y < subheight; y++) {
 				filtersAndSamples[i] = 0;
 				i++;
 				
 				switch (bitDepth) {
-					case 1, 2, 4 -> {
+					case 1:
+					case 2:
+					case 4:
 						int xMask = 8 / bitDepth - 1;
 						int b = 0;
 						for (int x = 0; x < subwidth; x++) {
@@ -383,12 +389,13 @@ public final class ImageEncoder {
 							filtersAndSamples[i] = (byte)(b << (8 - (subwidth & xMask) * bitDepth));
 							i++;
 						}
-					}
-					case 8 -> {
+						break;
+					case 8:
 						for (int x = 0; x < subwidth; x++, i++)
 							filtersAndSamples[i] = (byte)image.getPixel(xOffset + x * xStep, yOffset + y * yStep);
-					}
-					default -> throw new AssertionError("Unreachable value");
+						break;
+					default:
+						throw new AssertionError("Unreachable value");
 				}
 			}
 			dout.write(filtersAndSamples);
@@ -421,7 +428,7 @@ public final class ImageEncoder {
 					throw new IllegalArgumentException("Invalid bit depths");
 			}
 			// Round up to nearest multiple of 8
-			int chosenBitDepth = Math.ceilDiv(IntStream.of(bitDepths).max().getAsInt(), 8) * 8;
+			int chosenBitDepth = -Math.floorDiv(-IntStream.of(bitDepths).max().getAsInt(), 8) * 8;
 			if (chosenBitDepth != 8 && chosenBitDepth != 16)
 				throw new AssertionError("Unreachable value");
 			
@@ -492,7 +499,7 @@ public final class ImageEncoder {
 			int chosenBitDepth;
 			if (bitDepths[1] > 0) {
 				// Round up to nearest multiple of 8
-				chosenBitDepth = Math.ceilDiv(IntStream.of(bitDepths).max().getAsInt(), 8) * 8;
+				chosenBitDepth = -Math.floorDiv(-IntStream.of(bitDepths).max().getAsInt(), 8) * 8;
 				if (chosenBitDepth != 8 && chosenBitDepth != 16)
 					throw new AssertionError("Unreachable value");
 			} else {

@@ -19,17 +19,18 @@ import java.util.Objects;
  * defensively. The interpretation of this chunk depends on the color type in the IHDR chunk.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11bKGD
  */
-public record Bkgd(byte[] data) implements BytesDataChunk {
+public class Bkgd implements BytesDataChunk {
 	
 	static final String TYPE = "bKGD";
 	
 	
 	/*---- Constructors and factory ----*/
-	
-	public Bkgd {
+	private final byte[] data;
+	public Bkgd(byte[] data) {
 		Objects.requireNonNull(data);
 		if (data.length != 1 && data.length != 2 && data.length != 6)
 			throw new IllegalArgumentException("Invalid data length");
+		this.data = data;
 	}
 	
 	
@@ -57,9 +58,13 @@ public record Bkgd(byte[] data) implements BytesDataChunk {
 	
 	
 	/*---- Method ----*/
-	
+
 	@Override public String getType() {
 		return TYPE;
 	}
-	
+
+	@Override
+	public byte[] data() {
+		return data;
+	}
 }

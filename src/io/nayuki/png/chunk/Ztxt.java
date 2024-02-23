@@ -20,28 +20,33 @@ import java.util.Objects;
  * should be treated as immutable, but arrays are not copied defensively.
  * @see https://www.w3.org/TR/2003/REC-PNG-20031110/#11zTXt
  */
-public record Ztxt(
-		String keyword,
-		CompressionMethod compressionMethod,
-		byte[] compressedText)
-	implements Chunk {
-	
-	
+public class Ztxt implements Chunk {
+
 	static final String TYPE = "zTXt";
-	
-	
+	private final String keyword;
+	private final CompressionMethod compressionMethod;
+	private final byte[] compressedText;
+
+
 	/*---- Constructor and factory ----*/
 	
-	public Ztxt {
+	public Ztxt(
+		String keyword,
+		CompressionMethod compressionMethod,
+		byte[] compressedText) {
 		Util.checkKeyword(keyword, true);
 		
 		Objects.requireNonNull(compressionMethod);
 		Objects.requireNonNull(compressedText);
 		byte[] decompText = compressionMethod.decompress(compressedText);
 		
-		var text = new String(decompText, StandardCharsets.ISO_8859_1);
+		String text = new String(decompText, StandardCharsets.ISO_8859_1);
 		Util.checkIso8859_1(text, true);
 		Util.checkedLengthSum(keyword, 2 * Byte.BYTES, compressedText);
+
+		this.keyword = keyword;
+		this.compressionMethod = compressionMethod;
+		this.compressedText = compressedText;
 	}
 	
 	
@@ -73,7 +78,7 @@ public record Ztxt(
 	
 	@Override public void writeChunk(OutputStream out) throws IOException {
 		int dataLen = Util.checkedLengthSum(keyword, 2 * Byte.BYTES, compressedText);
-		try (var cout = new ChunkWriter(dataLen, TYPE, out)) {
+		try (ChunkWriter cout = new ChunkWriter(dataLen, TYPE, out)) {
 			cout.writeString(keyword, StandardCharsets.ISO_8859_1, true);
 			cout.writeUint8(compressionMethod);
 			cout.write(compressedText);

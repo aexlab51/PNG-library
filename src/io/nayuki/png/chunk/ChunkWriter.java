@@ -91,7 +91,7 @@ final class ChunkWriter implements AutoCloseable {
 	
 	
 	private void writeInt(int val, int numBytes) throws IOException {
-		var b = new byte[numBytes];
+		byte[] b = new byte[numBytes];
 		for (int i = b.length - 1; i >= 0; i--, val >>>= 8)
 			b[i] = (byte)val;
 		write(b);
